@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { useDropzone } from 'react-dropzone';
 import toast from 'react-hot-toast';
 import { storage } from '../lib/storage';
-import { MapPinIcon, HeartIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { MapPinIcon, HeartIcon, ShareIcon, ChatBubbleLeftIcon } from '@heroicons/react/24/outline';
 import Map, { Marker } from 'react-map-gl';
 
 const DEMO_POSTS = [
@@ -50,7 +50,6 @@ export default function CommunityHub() {
   useEffect(() => {
     const savedPosts = storage.getPosts();
     if (savedPosts.length === 0) {
-      // Initialize with demo posts if empty
       DEMO_POSTS.forEach(post => storage.savePost(post));
       setPosts(DEMO_POSTS);
     } else {
@@ -85,6 +84,7 @@ export default function CommunityHub() {
       toast.success('Post created successfully!');
       setNewPost({ caption: '', hashtags: '' });
       setFiles([]);
+      document.getElementById('createPost')?.close();
     } catch (error) {
       toast.error('Failed to create post. Please try again.');
     }
@@ -112,16 +112,122 @@ export default function CommunityHub() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Community Hub</h1>
+    <div className="min-h-screen bg-gray-900">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-white">Community Hub</h1>
+          <button 
+            onClick={() => document.getElementById('createPost')?.showModal()}
+            className="btn bg-primary-600 hover:bg-primary-500 text-white"
+          >
+            Create Post
+          </button>
+        </div>
 
-      <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <h2 className="text-xl font-semibold mb-4">Create a Post</h2>
+        <div className="grid gap-6">
+          {posts.map((post) => (
+            <div key={post.id} className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700">
+              {post.media_url && (
+                <img
+                  src={post.media_url}
+                  alt=""
+                  className="w-full h-[400px] object-cover"
+                />
+              )}
+              
+              <div className="p-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="h-10 w-10 rounded-full bg-primary-600 flex items-center justify-center">
+                    <span className="text-white font-semibold">GB</span>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold">GuardianBot</h3>
+                    <p className="text-sm text-gray-400">{format(new Date(post.created_at), 'MMM d, yyyy')}</p>
+                  </div>
+                </div>
+
+                <p className="text-gray-300 mb-4 whitespace-pre-line">{post.caption}</p>
+                
+                {post.donation_goal && (
+                  <div className="mb-6 bg-gray-700 rounded-lg p-4">
+                    <div className="flex justify-between text-sm text-gray-300 mb-2">
+                      <span>Raised: ${post.donation_current || 0}</span>
+                      <span>Goal: ${post.donation_goal}</span>
+                    </div>
+                    <div className="w-full bg-gray-600 rounded-full h-2.5">
+                      <div 
+                        className="bg-primary-600 h-2.5 rounded-full" 
+                        style={{ width: `${(post.donation_current / post.donation_goal) * 100}%` }}
+                      ></div>
+                    </div>
+                    <button
+                      onClick={() => handleDonate(post)}
+                      className="mt-4 btn bg-primary-600 hover:bg-primary-500 text-white w-full flex items-center justify-center gap-2"
+                    >
+                      <HeartIcon className="w-5 h-5" />
+                      Donate Now
+                    </button>
+                  </div>
+                )}
+
+                {post.location && (
+                  <div className="mb-6 rounded-lg overflow-hidden h-48">
+                    <Map
+                      {...viewport}
+                      onMove={evt => setViewport(evt.viewport)}
+                      mapStyle="mapbox://styles/mapbox/dark-v10"
+                      mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
+                    >
+                      <Marker
+                        latitude={post.location.lat}
+                        longitude={post.location.lng}
+                      >
+                        <MapPinIcon className="h-6 w-6 text-primary-500" />
+                      </Marker>
+                    </Map>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {post.hashtags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="bg-primary-600/20 text-primary-400 text-sm px-3 py-1 rounded-full"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="flex justify-between items-center border-t border-gray-700 pt-4">
+                  <div className="flex gap-6">
+                    <button className="text-gray-400 hover:text-primary-400 flex items-center gap-2">
+                      <HeartIcon className="w-5 h-5" />
+                      <span>Like</span>
+                    </button>
+                    <button className="text-gray-400 hover:text-primary-400 flex items-center gap-2">
+                      <ChatBubbleLeftIcon className="w-5 h-5" />
+                      <span>Comment</span>
+                    </button>
+                    <button className="text-gray-400 hover:text-primary-400 flex items-center gap-2">
+                      <ShareIcon className="w-5 h-5" />
+                      <span>Share</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <dialog id="createPost" className="modal bg-gray-800 rounded-lg p-6 max-w-xl w-full">
+        <h2 className="text-xl font-semibold text-white mb-4">Create a Post</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Caption</label>
+            <label className="block text-sm font-medium text-gray-300">Caption</label>
             <textarea
-              className="input mt-1"
+              className="w-full bg-gray-700 border-gray-600 rounded-lg p-3 text-white"
               rows={3}
               value={newPost.caption}
               onChange={(e) => setNewPost({ ...newPost, caption: e.target.value })}
@@ -130,10 +236,10 @@ export default function CommunityHub() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Hashtags</label>
+            <label className="block text-sm font-medium text-gray-300">Hashtags</label>
             <input
               type="text"
-              className="input mt-1"
+              className="w-full bg-gray-700 border-gray-600 rounded-lg p-3 text-white"
               value={newPost.hashtags}
               onChange={(e) => setNewPost({ ...newPost, hashtags: e.target.value })}
               placeholder="#community #safety"
@@ -141,117 +247,38 @@ export default function CommunityHub() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Media</label>
-            <div {...getRootProps()} className="mt-1 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer">
+            <label className="block text-sm font-medium text-gray-300">Media</label>
+            <div {...getRootProps()} className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center cursor-pointer">
               <input {...getInputProps()} />
-              <p>Drag & drop a photo or video, or click to select</p>
+              <p className="text-gray-400">Drag & drop a photo or video, or click to select</p>
             </div>
-            {files.length > 0 && (
-              <ul className="mt-2">
-                {files.map((file) => (
-                  <li key={file.name} className="text-sm text-gray-600">{file.name}</li>
-                ))}
-              </ul>
-            )}
           </div>
 
-          <button type="submit" className="btn btn-primary w-full">
-            Create Post
-          </button>
+          <div className="flex justify-end gap-4 mt-6">
+            <button
+              type="button"
+              onClick={() => document.getElementById('createPost')?.close()}
+              className="btn bg-gray-700 hover:bg-gray-600 text-white"
+            >
+              Cancel
+            </button>
+            <button type="submit" className="btn bg-primary-600 hover:bg-primary-500 text-white">
+              Post
+            </button>
+          </div>
         </form>
-      </div>
-
-      <div className="space-y-6">
-        {posts.map((post) => (
-          <div key={post.id} className="bg-white rounded-lg shadow">
-            {post.media_url && (
-              <img
-                src={post.media_url}
-                alt=""
-                className="w-full h-64 object-cover rounded-t-lg"
-              />
-            )}
-            <div className="p-6">
-              <p className="text-gray-900 mb-2 whitespace-pre-line">{post.caption}</p>
-              
-              {post.donation_goal && (
-                <div className="mb-4">
-                  <div className="flex justify-between text-sm text-gray-600 mb-1">
-                    <span>Raised: ${post.donation_current || 0}</span>
-                    <span>Goal: ${post.donation_goal}</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div 
-                      className="bg-primary-600 h-2.5 rounded-full" 
-                      style={{ width: `${(post.donation_current / post.donation_goal) * 100}%` }}
-                    ></div>
-                  </div>
-                  <button
-                    onClick={() => handleDonate(post)}
-                    className="mt-2 btn btn-primary w-full flex items-center justify-center gap-2"
-                  >
-                    <HeartIcon className="w-5 h-5" />
-                    Donate Now
-                  </button>
-                </div>
-              )}
-
-              {post.location && (
-                <div className="mb-4 h-48">
-                  <Map
-                    {...viewport}
-                    onMove={evt => setViewport(evt.viewport)}
-                    mapStyle="mapbox://styles/mapbox/streets-v11"
-                    mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
-                  >
-                    <Marker
-                      latitude={post.location.lat}
-                      longitude={post.location.lng}
-                    >
-                      <MapPinIcon className="h-6 w-6 text-red-500" />
-                    </Marker>
-                  </Map>
-                </div>
-              )}
-
-              <div className="flex flex-wrap gap-2 mb-4">
-                {post.hashtags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="bg-primary-100 text-primary-800 text-sm px-2 py-1 rounded-full"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-              <div className="flex justify-between items-center text-sm text-gray-500">
-                <span>{format(new Date(post.created_at), 'MMM d, yyyy')}</span>
-                <div className="flex gap-4">
-                  <button className="hover:text-primary-600 flex items-center gap-1">
-                    <HeartIcon className="w-4 h-4" />
-                    Like
-                  </button>
-                  <button className="hover:text-primary-600 flex items-center gap-1">
-                    <ArrowPathIcon className="w-4 h-4" />
-                    Share
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+      </dialog>
 
       {showDonationModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-            <h3 className="text-lg font-semibold mb-4">Make a Donation</h3>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-gray-800 rounded-lg p-6 max-w-sm w-full">
+            <h3 className="text-lg font-semibold text-white mb-4">Make a Donation</h3>
             <div className="grid grid-cols-2 gap-4 mb-4">
               {[10, 25, 50, 100].map((amount) => (
                 <button
                   key={amount}
                   onClick={() => submitDonation(amount)}
-                  className="btn btn-secondary"
+                  className="btn bg-primary-600/20 hover:bg-primary-600/30 text-primary-400"
                 >
                   ${amount}
                 </button>
@@ -259,7 +286,7 @@ export default function CommunityHub() {
             </div>
             <button
               onClick={() => setShowDonationModal(false)}
-              className="btn btn-primary w-full"
+              className="btn bg-gray-700 hover:bg-gray-600 text-white w-full"
             >
               Cancel
             </button>
