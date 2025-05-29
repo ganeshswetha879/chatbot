@@ -45,8 +45,12 @@ export const storage = {
       id: Date.now().toString(),
       created_at: new Date().toISOString()
     };
-    posts.push(newPost);
+    posts.unshift(newPost);
     localStorage.setItem('community_posts', JSON.stringify(posts));
     return newPost;
+  },
+
+  updatePosts: (posts) => {
+    localStorage.setItem('community_posts', JSON.stringify(posts));
   }
 };
