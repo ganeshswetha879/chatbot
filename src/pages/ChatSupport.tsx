@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { supabase } from '../lib/supabaseClient';
 import ReactMarkdown from 'react-markdown';
 import toast from 'react-hot-toast';
+import { storage } from '../lib/storage';
 
 export default function ChatSupport() {
   const [messages, setMessages] = useState([]);
@@ -10,25 +10,12 @@ export default function ChatSupport() {
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    fetchMessages();
+    setMessages(storage.getChatMessages());
   }, []);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
-  const fetchMessages = async () => {
-    const { data, error } = await supabase
-      .from('chat_messages')
-      .select('*')
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching messages:', error);
-      return;
-    }
-    setMessages(data || []);
-  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -45,46 +32,22 @@ export default function ChatSupport() {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    storage.saveChatMessage(userMessage);
     setInput('');
     setIsTyping(true);
 
-    try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages: messages.concat(userMessage).map(msg => ({
-            role: msg.role,
-            content: msg.content
-          }))
-        })
-      });
-
-      const data = await response.json();
-      
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
+    // Simulate AI response
+    setTimeout(() => {
       const botResponse = {
-        content: data.choices[0].message.content,
+        content: "I'm a simple chatbot for this hackathon demo. I can acknowledge your message but can't provide real assistance yet.",
         role: 'assistant',
         created_at: new Date().toISOString()
       };
-
+      
       setMessages(prev => [...prev, botResponse]);
-
-      // Save messages to Supabase
-      await supabase.from('chat_messages').insert([userMessage, botResponse]);
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast.error('Failed to send message. Please try again.');
-    } finally {
+      storage.saveChatMessage(botResponse);
       setIsTyping(false);
-    }
+    }, 1000);
   };
 
   return (
@@ -92,7 +55,7 @@ export default function ChatSupport() {
       <div className="bg-white rounded-lg shadow-lg overflow-hidden h-[calc(100vh-12rem)]">
         <div className="p-4 bg-primary-600 text-white">
           <h1 className="text-xl font-semibold">Chat Support</h1>
-          <p className="text-sm opacity-90">AI-powered assistance available 24/7</p>
+          <p className="text-sm opacity-90">Demo chatbot for hackathon</p>
         </div>
 
         <div className="flex flex-col h-[calc(100%-8rem)]">

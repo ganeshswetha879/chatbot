@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useDropzone } from 'react-dropzone';
-import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
+import { storage } from '../lib/storage';
 
 export default function CommunityHub() {
   const [posts, setPosts] = useState([]);
@@ -13,21 +13,8 @@ export default function CommunityHub() {
   const [files, setFiles] = useState([]);
 
   useEffect(() => {
-    fetchPosts();
+    setPosts(storage.getPosts());
   }, []);
-
-  const fetchPosts = async () => {
-    const { data, error } = await supabase
-      .from('community_posts')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching posts:', error);
-      return;
-    }
-    setPosts(data);
-  };
 
   const onDrop = (acceptedFiles) => {
     setFiles(acceptedFiles);
@@ -46,22 +33,15 @@ export default function CommunityHub() {
     e.preventDefault();
 
     try {
-      const { data, error } = await supabase
-        .from('community_posts')
-        .insert([
-          {
-            caption: newPost.caption,
-            hashtags: newPost.hashtags.split(' ').filter(tag => tag.startsWith('#')),
-            // Handle file upload and get URL
-          }
-        ]);
+      const post = storage.savePost({
+        caption: newPost.caption,
+        hashtags: newPost.hashtags.split(' ').filter(tag => tag.startsWith('#'))
+      });
 
-      if (error) throw error;
-
+      setPosts(prev => [post, ...prev]);
       toast.success('Post created successfully!');
       setNewPost({ caption: '', hashtags: '' });
       setFiles([]);
-      fetchPosts();
     } catch (error) {
       toast.error('Failed to create post. Please try again.');
     }

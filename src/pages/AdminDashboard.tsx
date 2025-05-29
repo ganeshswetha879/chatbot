@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { supabase } from '../lib/supabaseClient';
+import { storage } from '../lib/storage';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -35,43 +35,30 @@ export default function AdminDashboard() {
     fetchIssues();
   }, [filters]);
 
-  const fetchIssues = async () => {
-    let query = supabase
-      .from('issues')
-      .select('*')
-      .order('created_at', { ascending: false });
+  const fetchIssues = () => {
+    let filteredIssues = storage.getIssues();
 
     if (filters.status !== 'all') {
-      query = query.eq('status', filters.status);
+      filteredIssues = filteredIssues.filter(issue => issue.status === filters.status);
     }
     if (filters.type !== 'all') {
-      query = query.eq('type', filters.type);
+      filteredIssues = filteredIssues.filter(issue => issue.type === filters.type);
     }
     if (filters.date !== 'all') {
       const date = new Date();
       date.setDate(date.getDate() - parseInt(filters.date));
-      query = query.gte('created_at', date.toISOString());
+      filteredIssues = filteredIssues.filter(issue => new Date(issue.created_at) >= date);
     }
 
-    const { data, error } = await query;
-    if (error) {
-      console.error('Error fetching issues:', error);
-      return;
-    }
-    setIssues(data);
+    setIssues(filteredIssues);
   };
 
-  const updateIssueStatus = async (id, status) => {
-    const { error } = await supabase
-      .from('issues')
-      .update({ status })
-      .eq('id', id);
-
-    if (error) {
-      console.error('Error updating issue:', error);
-      return;
-    }
-
+  const updateIssueStatus = (id, status) => {
+    const issues = storage.getIssues();
+    const updatedIssues = issues.map(issue => 
+      issue.id === id ? { ...issue, status } : issue
+    );
+    localStorage.setItem('issues', JSON.stringify(updatedIssues));
     fetchIssues();
   };
 

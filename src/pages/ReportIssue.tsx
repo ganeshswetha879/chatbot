@@ -3,7 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { MapPinIcon as MapPin } from '@heroicons/react/24/outline';
 import Map, { Marker } from 'react-map-gl';
 import toast from 'react-hot-toast';
-import { supabase } from '../lib/supabaseClient';
+import { storage } from '../lib/storage';
 
 const issueTypes = [
   'Fire Accident',
@@ -46,23 +46,23 @@ export default function ReportIssue() {
     e.preventDefault();
     
     try {
-      const { data, error } = await supabase
-        .from('issues')
-        .insert([
-          {
-            type: formData.issueType,
-            description: formData.description,
-            reporter_name: formData.name,
-            reporter_phone: formData.phone,
-            location: `POINT(${formData.location.lng} ${formData.location.lat})`,
-            status: 'pending'
-          }
-        ]);
-
-      if (error) throw error;
+      storage.saveIssue({
+        type: formData.issueType,
+        description: formData.description,
+        reporter_name: formData.name,
+        reporter_phone: formData.phone,
+        location: `${formData.location.lng},${formData.location.lat}`
+      });
 
       toast.success('Issue reported successfully!');
-      // Handle file uploads here
+      setFormData({
+        issueType: '',
+        description: '',
+        name: '',
+        phone: '',
+        location: { lat: 0, lng: 0 }
+      });
+      setFiles([]);
     } catch (error) {
       toast.error('Failed to report issue. Please try again.');
     }
