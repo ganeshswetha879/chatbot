@@ -2,15 +2,18 @@ import { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import toast from 'react-hot-toast';
 import { storage } from '../lib/storage';
+import { sendChatMessage } from '../lib/api';
 import { MapPinIcon, ShareIcon } from '@heroicons/react/24/outline';
 import Map, { Marker } from 'react-map-gl';
 
-const DEMO_RESPONSES = {
-  initial: "Hello! I'm your GuardianBot assistant. To help you better, could you:\n\n1. Share your location\n2. Describe what happened\n3. Any immediate help needed?\n\nOur team will guide you through the process. 🛡️",
-  location: "Thank you for sharing your location. This helps us coordinate emergency response if needed. Could you tell me what's happening?",
-  emergency: "I understand this is an emergency. I've alerted our response team. While they're on their way:\n\n1. Stay calm\n2. Find a safe location\n3. Keep this chat open\n\nIs there anything specific you need right now?",
-  followup: "Our team is monitoring the situation. We'll stay with you throughout this process. Do you need:\n\n- Medical assistance?\n- Safety guidance?\n- Community support?\n\nJust let me know. 🤝"
-};
+const SYSTEM_PROMPT = `You are GuardianBot, an AI emergency response assistant. Your role is to:
+1. Help people report emergencies and incidents
+2. Provide immediate safety guidance
+3. Collect relevant information (location, situation details)
+4. Offer emotional support
+5. Guide users through the emergency response process
+
+Always maintain a calm, professional tone. For serious emergencies, emphasize the importance of contacting emergency services first.`;
 
 export default function ChatSupport() {
   const [messages, setMessages] = useState([]);
@@ -24,7 +27,7 @@ export default function ChatSupport() {
     if (savedMessages.length === 0) {
       const initialMessage = {
         role: 'assistant',
-        content: DEMO_RESPONSES.initial,
+        content: "Hello! I'm your GuardianBot assistant. To help you better, could you:\n\n1. Share your location\n2. Describe what happened\n3. Any immediate help needed?\n\nOur team will guide you through the process. 🛡️",
         created_at: new Date().toISOString()
       };
       storage.saveChatMessage(initialMessage);
@@ -57,35 +60,52 @@ export default function ChatSupport() {
     setInput('');
     setIsTyping(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      let response = DEMO_RESPONSES.followup;
-      if (input.toLowerCase().includes('location')) {
-        response = DEMO_RESPONSES.location;
-      } else if (input.toLowerCase().includes('emergency')) {
-        response = DEMO_RESPONSES.emergency;
-      }
+    // Prepare messages for API
+    const apiMessages = [
+      { role: 'system', content: SYSTEM_PROMPT },
+      ...messages.map(msg => ({ role: msg.role, content: msg.content })),
+      { role: 'user', content: input }
+    ];
 
-      const botResponse = {
-        content: response,
-        role: 'assistant',
-        created_at: new Date().toISOString()
-      };
+    try {
+      const response = await sendChatMessage(apiMessages);
       
-      setMessages(prev => [...prev, botResponse]);
-      storage.saveChatMessage(botResponse);
+      if (response) {
+        const botResponse = {
+          content: response,
+          role: 'assistant',
+          created_at: new Date().toISOString()
+        };
+        
+        setMessages(prev => [...prev, botResponse]);
+        storage.saveChatMessage(botResponse);
+      }
+    } catch (error) {
+      toast.error('Failed to get response. Please try again.');
+    } finally {
       setIsTyping(false);
-    }, 1000);
+    }
   };
 
   const shareLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setLocation({
+          const newLocation = {
             lat: position.coords.latitude,
             lng: position.coords.longitude
-          });
+          };
+          setLocation(newLocation);
+          
+          // Add location message to chat
+          const locationMessage = {
+            role: 'user',
+            content: `📍 Location shared: ${newLocation.lat}, ${newLocation.lng}`,
+            created_at: new Date().toISOString()
+          };
+          setMessages(prev => [...prev, locationMessage]);
+          storage.saveChatMessage(locationMessage);
+          
           toast.success('Location shared successfully');
         },
         () => toast.error('Could not get your location')
