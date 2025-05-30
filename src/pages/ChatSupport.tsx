@@ -2,46 +2,21 @@ import { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import toast from 'react-hot-toast';
 import { storage } from '../lib/storage';
+import { MapPinIcon, ShareIcon } from '@heroicons/react/24/outline';
+import Map, { Marker } from 'react-map-gl';
 
 const DEMO_RESPONSES = {
-  greetings: [
-    "Hello! How can I help you today?",
-    "Hi there! I'm here to assist you with any emergency-related questions.",
-    "Welcome to GuardianBot! How may I help you?"
-  ],
-  emergency: [
-    "If this is a life-threatening emergency, please call emergency services immediately at 911.",
-    "Your safety is our priority. Please contact emergency services first, then report the incident through our platform.",
-    "For immediate assistance, please contact emergency services. Once safe, you can report the incident using our reporting system."
-  ],
-  safety: [
-    "Here are some general safety tips:\n\n1. Stay calm and assess the situation\n2. Contact emergency services if needed\n3. Follow official evacuation procedures\n4. Keep emergency contacts handy\n5. Stay informed through official channels",
-    "Remember these safety guidelines:\n\n- Keep emergency supplies ready\n- Know your evacuation routes\n- Have a family emergency plan\n- Stay updated with local news\n- Keep important documents accessible"
-  ]
+  initial: "Hello! I'm your GuardianBot assistant. To help you better, could you:\n\n1. Share your location\n2. Describe what happened\n3. Any immediate help needed?\n\nOur team will guide you through the process. 🛡️",
+  location: "Thank you for sharing your location. This helps us coordinate emergency response if needed. Could you tell me what's happening?",
+  emergency: "I understand this is an emergency. I've alerted our response team. While they're on their way:\n\n1. Stay calm\n2. Find a safe location\n3. Keep this chat open\n\nIs there anything specific you need right now?",
+  followup: "Our team is monitoring the situation. We'll stay with you throughout this process. Do you need:\n\n- Medical assistance?\n- Safety guidance?\n- Community support?\n\nJust let me know. 🤝"
 };
-
-function getAIResponse(message) {
-  const lowerMsg = message.toLowerCase();
-  
-  if (lowerMsg.includes('hello') || lowerMsg.includes('hi ')) {
-    return DEMO_RESPONSES.greetings[Math.floor(Math.random() * DEMO_RESPONSES.greetings.length)];
-  }
-  
-  if (lowerMsg.includes('emergency') || lowerMsg.includes('help')) {
-    return DEMO_RESPONSES.emergency[Math.floor(Math.random() * DEMO_RESPONSES.emergency.length)];
-  }
-  
-  if (lowerMsg.includes('safety') || lowerMsg.includes('tips')) {
-    return DEMO_RESPONSES.safety[Math.floor(Math.random() * DEMO_RESPONSES.safety.length)];
-  }
-  
-  return "I understand your concern. For specific assistance, please use our Report Issue feature or contact emergency services if it's urgent.";
-}
 
 export default function ChatSupport() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [location, setLocation] = useState(null);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -49,7 +24,7 @@ export default function ChatSupport() {
     if (savedMessages.length === 0) {
       const initialMessage = {
         role: 'assistant',
-        content: "Hello! I'm GuardianBot, your emergency response assistant. How can I help you today?",
+        content: DEMO_RESPONSES.initial,
         created_at: new Date().toISOString()
       };
       storage.saveChatMessage(initialMessage);
@@ -82,10 +57,17 @@ export default function ChatSupport() {
     setInput('');
     setIsTyping(true);
 
-    // Simulate AI response with a delay
+    // Simulate AI response
     setTimeout(() => {
+      let response = DEMO_RESPONSES.followup;
+      if (input.toLowerCase().includes('location')) {
+        response = DEMO_RESPONSES.location;
+      } else if (input.toLowerCase().includes('emergency')) {
+        response = DEMO_RESPONSES.emergency;
+      }
+
       const botResponse = {
-        content: getAIResponse(input),
+        content: response,
         role: 'assistant',
         created_at: new Date().toISOString()
       };
@@ -96,66 +78,118 @@ export default function ChatSupport() {
     }, 1000);
   };
 
-  return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden h-[calc(100vh-12rem)]">
-        <div className="p-4 bg-primary-600 text-white">
-          <h1 className="text-xl font-semibold">Emergency Response Chat Support</h1>
-          <p className="text-sm opacity-90">Get immediate assistance and safety guidance</p>
-        </div>
+  const shareLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+          toast.success('Location shared successfully');
+        },
+        () => toast.error('Could not get your location')
+      );
+    }
+  };
 
-        <div className="flex flex-col h-[calc(100%-8rem)]">
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
+  return (
+    <div className="min-h-screen bg-gray-900">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden h-[calc(100vh-12rem)]">
+          <div className="p-4 bg-gray-800 border-b border-gray-700">
+            <h1 className="text-xl font-semibold text-white">Emergency Response Chat</h1>
+            <p className="text-sm text-gray-400">We're here to help 24/7</p>
+          </div>
+
+          <div className="flex flex-col h-[calc(100%-8rem)]">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {messages.map((message, index) => (
                 <div
-                  className={`max-w-[70%] rounded-lg p-3 ${
-                    message.role === 'user'
-                      ? 'bg-primary-600 text-white'
-                      : 'bg-gray-100 text-gray-900'
-                  }`}
+                  key={index}
+                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
-                  <ReactMarkdown className="prose prose-sm">
-                    {message.content}
-                  </ReactMarkdown>
-                </div>
-              </div>
-            ))}
-            {isTyping && (
-              <div className="flex justify-start">
-                <div className="bg-gray-100 rounded-lg p-3">
-                  <div className="flex space-x-2">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
+                  <div
+                    className={`max-w-[70%] rounded-lg p-3 ${
+                      message.role === 'user'
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-gray-700 text-gray-100'
+                    }`}
+                  >
+                    <ReactMarkdown className="prose prose-invert prose-sm">
+                      {message.content}
+                    </ReactMarkdown>
                   </div>
+                </div>
+              ))}
+              {isTyping && (
+                <div className="flex justify-start">
+                  <div className="bg-gray-700 rounded-lg p-3">
+                    <div className="flex space-x-2">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {location && (
+              <div className="p-4 bg-gray-700">
+                <div className="h-40 rounded-lg overflow-hidden">
+                  <Map
+                    initialViewState={{
+                      latitude: location.lat,
+                      longitude: location.lng,
+                      zoom: 14
+                    }}
+                    mapStyle="mapbox://styles/mapbox/dark-v10"
+                    mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
+                  >
+                    <Marker latitude={location.lat} longitude={location.lng}>
+                      <MapPinIcon className="h-6 w-6 text-primary-500" />
+                    </Marker>
+                  </Map>
                 </div>
               </div>
             )}
-            <div ref={messagesEndRef} />
-          </div>
 
-          <form onSubmit={handleSubmit} className="p-4 border-t">
-            <div className="flex space-x-4">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Type your message..."
-                className="input flex-1"
-              />
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={!input.trim() || isTyping}
-              >
-                Send
-              </button>
+            <div className="p-4 bg-gray-800 border-t border-gray-700">
+              <div className="flex space-x-4 mb-4">
+                <button
+                  onClick={shareLocation}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg transition-colors"
+                >
+                  <MapPinIcon className="h-5 w-5" />
+                  Share Location
+                </button>
+                <button
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg transition-colors"
+                >
+                  <ShareIcon className="h-5 w-5" />
+                  Share Media
+                </button>
+              </div>
+              <form onSubmit={handleSubmit} className="flex space-x-4">
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Type your message..."
+                  className="flex-1 bg-gray-700 text-gray-100 placeholder-gray-400 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+                <button
+                  type="submit"
+                  className="bg-primary-600 hover:bg-primary-500 text-white px-6 py-2 rounded-lg transition-colors"
+                  disabled={!input.trim() || isTyping}
+                >
+                  Send
+                </button>
+              </form>
             </div>
-          </form>
+          </div>
         </div>
       </div>
     </div>

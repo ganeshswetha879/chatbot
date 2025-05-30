@@ -3,78 +3,78 @@ import { ShieldCheckIcon, MapIcon, ChatBubbleLeftRightIcon, BellAlertIcon, UserG
 
 const features = [
   {
-    name: 'Real-time Incident Reporting',
-    description: 'Report emergencies and incidents instantly with location tracking and media upload capabilities.',
+    name: 'Smart Incident Detection',
+    description: 'AI-powered system that automatically detects and categorizes emergencies for faster response.',
     icon: ShieldCheckIcon,
   },
   {
-    name: 'Live Incident Map',
-    description: 'Interactive map showing real-time incidents and emergency zones in your area.',
+    name: 'Real-time Tracking',
+    description: 'Live monitoring of incidents with precise location tracking and status updates.',
     icon: MapIcon,
   },
   {
     name: '24/7 AI Support',
-    description: 'Get immediate assistance through our advanced AI-powered emergency response system.',
+    description: 'Instant assistance through our advanced chatbot with human backup support.',
     icon: ChatBubbleLeftRightIcon,
   },
   {
-    name: 'Emergency Alerts',
-    description: 'Receive instant notifications about emergencies and updates in your community.',
+    name: 'Community Alerts',
+    description: 'Targeted notifications to keep your community informed and safe.',
     icon: BellAlertIcon,
   },
   {
-    name: 'Community Engagement',
-    description: 'Connect with your community, share updates, and participate in emergency preparedness.',
+    name: 'Resource Network',
+    description: 'Connect with local emergency services, volunteers, and support groups.',
     icon: UserGroupIcon,
   },
   {
-    name: 'Analytics Dashboard',
-    description: 'Track incident patterns and response times with detailed analytics.',
+    name: 'Response Analytics',
+    description: 'Data-driven insights to improve emergency response times and effectiveness.',
     icon: ChartBarIcon,
   }
 ];
 
-const howItWorks = [
+const processSteps = [
   {
-    step: 1,
-    title: 'Report an Incident',
-    description: 'Use our intuitive reporting system to quickly document emergencies with photos, location, and details.'
+    title: 'Report & Detect',
+    description: 'AI-powered incident reporting and automatic emergency detection system.',
+    color: 'from-blue-500 to-cyan-500'
   },
   {
-    step: 2,
-    title: 'AI Assessment',
-    description: 'Our AI system immediately analyzes the report to determine severity and required response.'
+    title: 'Analyze & Alert',
+    description: 'Smart analysis of the situation and instant alerts to relevant responders.',
+    color: 'from-purple-500 to-pink-500'
   },
   {
-    step: 3,
-    title: 'Community Alert',
-    description: 'Relevant authorities and community members are notified based on incident type and location.'
+    title: 'Respond & Track',
+    description: 'Coordinated emergency response with real-time tracking and updates.',
+    color: 'from-green-500 to-emerald-500'
   },
   {
-    step: 4,
-    title: 'Track Response',
-    description: 'Monitor the incident status and response progress in real-time through our platform.'
+    title: 'Resolve & Learn',
+    description: 'Incident resolution and AI-driven insights for future prevention.',
+    color: 'from-orange-500 to-yellow-500'
   }
 ];
 
 export default function Landing() {
   return (
-    <div className="bg-gradient-to-b from-gray-900 to-gray-800 text-white">
+    <div className="bg-gray-900 text-white">
       {/* Hero section */}
       <div className="relative isolate px-6 pt-14 lg:px-8">
         <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
           <div className="text-center">
-            <h1 className="text-4xl font-bold tracking-tight sm:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-primary-400 to-primary-600">
+            <h1 className="text-4xl font-bold tracking-tight sm:text-6xl bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">
               Your Community's Guardian
             </h1>
             <p className="mt-6 text-lg leading-8 text-gray-300">
-              GuardianBot leverages AI technology to revolutionize community emergency response. Stay connected, informed, and protected 24/7.
+              AI-powered emergency response system that keeps your community safe, connected, and resilient 24/7.
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Link to="/report" className="btn bg-primary-600 hover:bg-primary-500 text-white">
+              <Link to="/report" className="bg-primary-600 hover:bg-primary-500 text-white px-6 py-3 rounded-lg transition-colors">
                 Report Emergency
               </Link>
-              <Link to="/community" className="btn bg-white/10 hover:bg-white/20 text-white">
+              <Link to="/community" className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-lg transition-colors">
                 Join Community
               </Link>
             </div>
@@ -82,59 +82,68 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* How it works section */}
-      <div className="py-24 bg-black/30">
+      {/* Process section */}
+      <div className="py-24 bg-gray-800/50">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl lg:text-center">
+          <div className="mx-auto max-w-2xl lg:text-center mb-16">
             <h2 className="text-base font-semibold leading-7 text-primary-400">
               How It Works
             </h2>
-            <p className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-              Streamlined Emergency Response
+            <p className="mt-2 text-3xl font-bold tracking-tight">
+              Intelligent Emergency Response
             </p>
           </div>
 
-          <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
-            <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-4">
-              {howItWorks.map((item) => (
-                <div key={item.step} className="flex flex-col items-start">
-                  <div className="rounded-full bg-primary-600/10 p-2 ring-1 ring-primary-600/20">
-                    <span className="text-2xl font-bold text-primary-400">{item.step}</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {processSteps.map((step, index) => (
+              <div
+                key={step.title}
+                className="relative group"
+              >
+                <div className={`absolute inset-0 rounded-2xl bg-gradient-to-r ${step.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                <div className="relative bg-gray-800 p-6 rounded-2xl h-full border border-gray-700 group-hover:border-transparent transition-colors">
+                  <div className="flex items-center gap-4 mb-4">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-600/10 text-primary-400 font-bold">
+                      {index + 1}
+                    </span>
+                    <h3 className="font-semibold text-xl">{step.title}</h3>
                   </div>
-                  <dt className="mt-4 font-semibold text-white">{item.title}</dt>
-                  <dd className="mt-2 leading-7 text-gray-400">{item.description}</dd>
+                  <p className="text-gray-400">{step.description}</p>
                 </div>
-              ))}
-            </dl>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Features section */}
+      {/* Features grid */}
       <div className="py-24">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl lg:text-center">
+          <div className="mx-auto max-w-2xl lg:text-center mb-16">
             <h2 className="text-base font-semibold leading-7 text-primary-400">
-              Powerful Features
+              Core Features
             </h2>
-            <p className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-              Everything you need for community safety
+            <p className="mt-2 text-3xl font-bold tracking-tight">
+              Advanced Protection System
             </p>
           </div>
-          <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
-            <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
-              {features.map((feature) => (
-                <div key={feature.name} className="flex flex-col">
-                  <dt className="flex items-center gap-x-3 text-base font-semibold text-white">
-                    <feature.icon className="h-5 w-5 flex-none text-primary-400" aria-hidden="true" />
-                    {feature.name}
-                  </dt>
-                  <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-400">
-                    <p className="flex-auto">{feature.description}</p>
-                  </dd>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature) => (
+              <div
+                key={feature.name}
+                className="relative group"
+              >
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary-600 to-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative bg-gray-800 p-6 rounded-2xl h-full border border-gray-700 group-hover:border-transparent transition-colors">
+                  <div className="flex items-center gap-4 mb-4">
+                    <feature.icon className="h-6 w-6 text-primary-400" />
+                    <h3 className="font-semibold text-lg">{feature.name}</h3>
+                  </div>
+                  <p className="text-gray-400">{feature.description}</p>
                 </div>
-              ))}
-            </dl>
+              </div>
+            ))}
           </div>
         </div>
       </div>
