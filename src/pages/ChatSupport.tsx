@@ -115,28 +115,35 @@ export default function ChatSupport() {
 
   return (
     <div className="min-h-screen bg-gray-900">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden h-[calc(100vh-12rem)]">
-          <div className="p-4 bg-gray-800 border-b border-gray-700">
-            <h1 className="text-xl font-semibold text-white">Emergency Response Chat</h1>
-            <p className="text-sm text-gray-400">We're here to help 24/7</p>
+      <div className="max-w-6xl mx-auto h-screen flex flex-col">
+        <div className="flex-1 flex flex-col bg-gray-800 shadow-xl rounded-lg m-4">
+          {/* Header */}
+          <div className="px-6 py-4 border-b border-gray-700">
+            <h1 className="text-2xl font-bold text-white">Emergency Response Chat</h1>
+            <p className="text-gray-400">We're here to help 24/7</p>
           </div>
 
-          <div className="flex flex-col h-[calc(100%-8rem)]">
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* Chat Messages */}
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            <div className="space-y-6">
               {messages.map((message, index) => (
                 <div
                   key={index}
                   className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[70%] rounded-lg p-3 ${
+                    className={`max-w-[80%] rounded-2xl px-6 py-4 ${
                       message.role === 'user'
                         ? 'bg-primary-600 text-white'
                         : 'bg-gray-700 text-gray-100'
                     }`}
                   >
-                    <ReactMarkdown className="prose prose-invert prose-sm">
+                    <ReactMarkdown 
+                      className="prose prose-invert prose-lg"
+                      components={{
+                        p: ({node, ...props}) => <p className="text-lg" {...props} />
+                      }}
+                    >
                       {message.content}
                     </ReactMarkdown>
                   </div>
@@ -144,71 +151,73 @@ export default function ChatSupport() {
               ))}
               {isTyping && (
                 <div className="flex justify-start">
-                  <div className="bg-gray-700 rounded-lg p-3">
+                  <div className="bg-gray-700 rounded-2xl px-6 py-4">
                     <div className="flex space-x-2">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
+                      <div className="w-3 h-3 bg-gray-400 rounded-full animate-bounce"></div>
+                      <div className="w-3 h-3 bg-gray-400 rounded-full animate-bounce delay-100"></div>
+                      <div className="w-3 h-3 bg-gray-400 rounded-full animate-bounce delay-200"></div>
                     </div>
                   </div>
                 </div>
               )}
               <div ref={messagesEndRef} />
             </div>
+          </div>
 
-            {location && (
-              <div className="p-4 bg-gray-700">
-                <div className="h-40 rounded-lg overflow-hidden">
-                  <Map
-                    initialViewState={{
-                      latitude: location.lat,
-                      longitude: location.lng,
-                      zoom: 14
-                    }}
-                    mapStyle="mapbox://styles/mapbox/dark-v10"
-                    mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
-                  >
-                    <Marker latitude={location.lat} longitude={location.lng}>
-                      <MapPinIcon className="h-6 w-6 text-primary-500" />
-                    </Marker>
-                  </Map>
-                </div>
+          {/* Location Map */}
+          {location && (
+            <div className="px-6 py-4 border-t border-gray-700">
+              <div className="h-48 rounded-lg overflow-hidden">
+                <Map
+                  initialViewState={{
+                    latitude: location.lat,
+                    longitude: location.lng,
+                    zoom: 14
+                  }}
+                  mapStyle="mapbox://styles/mapbox/dark-v10"
+                  mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
+                >
+                  <Marker latitude={location.lat} longitude={location.lng}>
+                    <MapPinIcon className="h-8 w-8 text-primary-500" />
+                  </Marker>
+                </Map>
               </div>
-            )}
-
-            <div className="p-4 bg-gray-800 border-t border-gray-700">
-              <div className="flex space-x-4 mb-4">
-                <button
-                  onClick={shareLocation}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg transition-colors"
-                >
-                  <MapPinIcon className="h-5 w-5" />
-                  Share Location
-                </button>
-                <button
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg transition-colors"
-                >
-                  <ShareIcon className="h-5 w-5" />
-                  Share Media
-                </button>
-              </div>
-              <form onSubmit={handleSubmit} className="flex space-x-4">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Type your message..."
-                  className="flex-1 bg-gray-700 text-gray-100 placeholder-gray-400 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
-                <button
-                  type="submit"
-                  className="bg-primary-600 hover:bg-primary-500 text-white px-6 py-2 rounded-lg transition-colors"
-                  disabled={!input.trim() || isTyping}
-                >
-                  Send
-                </button>
-              </form>
             </div>
+          )}
+
+          {/* Input Area */}
+          <div className="px-6 py-4 border-t border-gray-700">
+            <div className="flex space-x-4 mb-4">
+              <button
+                onClick={shareLocation}
+                className="flex items-center gap-2 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-xl transition-colors text-lg"
+              >
+                <MapPinIcon className="h-6 w-6" />
+                Share Location
+              </button>
+              <button
+                className="flex items-center gap-2 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-xl transition-colors text-lg"
+              >
+                <ShareIcon className="h-6 w-6" />
+                Share Media
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="flex space-x-4">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Type your message..."
+                className="flex-1 bg-gray-700 text-gray-100 placeholder-gray-400 text-lg rounded-xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+              <button
+                type="submit"
+                className="bg-primary-600 hover:bg-primary-500 text-white px-8 py-4 rounded-xl transition-colors text-lg font-medium"
+                disabled={!input.trim() || isTyping}
+              >
+                Send
+              </button>
+            </form>
           </div>
         </div>
       </div>
